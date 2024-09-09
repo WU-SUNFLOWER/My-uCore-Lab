@@ -1,4 +1,4 @@
-#  My solution of THU uCore Lab
+#  My Solution of THU uCore Lab
 
 *uCore* is an educational operating system developed by the Computer Science Department of Tsinghua University, which comes with 8 lab exercises. 
 
