@@ -10,6 +10,6 @@ Now, I am sharing my solution code and study notes on GitHub to help those in ne
 
 The official GitHub page of uCore (x86 version): https://github.com/chyyuu/os_kernel_lab/tree/x86-32
 
-The official document of uCore (x86 version): [https://github.com/chyyuu/os_kernel_lab/tree/x86-32](https://chyyuu.gitbooks.io/ucore_os_docs/content/)
+The official document of uCore (x86 version): https://chyyuu.gitbooks.io/ucore_os_docs/content/
 
 The official online courses of uCore (x86 version): https://www.xuetangx.com/course/THU08091000267/12424484
