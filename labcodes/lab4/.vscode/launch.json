@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "DebugKernel",
+            "type": "cppdbg",
+            "request": "launch",
+            "miDebuggerServerAddress": "localhost:1234",
+            "program": "${workspaceFolder}/bin/kernel",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build-debug-nogdb"
+        },
+        {
+            "name": "DebugBootloader",
+            "type": "cppdbg",
+            "request": "launch",
+            "miDebuggerServerAddress": "localhost:1234",
+            "program": "${workspaceFolder}/obj/bootblock.o",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "build-debug-nogdb"
+        }
+    ]
+}
