@@ -458,4 +458,4 @@ bad_mm:
 
 修改好所有要修改的代码，执行`make grade`，应该能够得到满分结果。至此，THU UCORE LAB的所有必做任务就全部完成了。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/b440e4f1b8aa42b5b6aabffc2f47a51c~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510723&x-orig-sign=O%2Fvt3HZfrF7BpdTpGhoXsDKjgWs%3D)
+![image.png](images/97e392c20f8898fa151c8a60d0c478ce1589329c6ed43c0b5f28ba98d124ec3d.awebp)

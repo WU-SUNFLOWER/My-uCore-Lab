@@ -394,6 +394,6 @@ pmm_init(void) {
 
 ok，到此为止可以说我们要改的地方都改掉了，来看看最终的效果：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/dd206862eb0f4fe3807cfaa1b7540cc9~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510464&x-orig-sign=dtTGqxdjoukQs2EluhKEyUhu%2BkY%3D)
+![image.png](images/869f7202edcb6877a0af66803264446914d9a61eb86c30415fd6b08d50f4870b.awebp)
 
 可以看到uCore已经成功建立起了和物理内存空间`[0x00000000, 0x38000000)`地址完全一致的虚拟内存空间，搞定！

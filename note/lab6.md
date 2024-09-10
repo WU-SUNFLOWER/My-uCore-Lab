@@ -545,7 +545,7 @@ $S_{max} - S_{min} ≤ Pass_{max} = \frac{BIG\_STRIDE} {Priority_{min}} = BIG\_S
 
 **现在我们终于来到了本次lab中uCore设计得最巧妙的地方**。来来来，让我们看看C语言中`uint8_t`和`int8_t`这两种数据类型的映射关系：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/069d251ba3d54023a0c7ace669f375c7~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510608&x-orig-sign=M4M6zIJucaceBuSJ%2B9YlvfPAnEk%3D)
+![image.png](images/6047e042178b23852605785214f95cbd96ac8fcc1d7f1a1c8f49d65075fa066b.awebp)
 
 从图中可见，在从无符号整型`uint8_t`到`int8_t`的类型转换中，整数区间$[128, 256)$会被映射到整数区间$[-128, 0)$. 显而易见，如果某个以`uint8_t`类型储存的整数$x$落在$[128, 256)$这个区间内，则将其转换为`int8_t`类型后，它在这种类型的意义下，在数学上将会被解释成整数$x - 256$.
 

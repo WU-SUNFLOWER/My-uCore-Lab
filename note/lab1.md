@@ -128,17 +128,17 @@ Makefile源码中出现了两个比较关键的自定义函数`listf_cc`和`add_
 
 *   \-e start：该选项指明ELF文件启动时候的入口地址。虽说最终bootloader的程序是直接在裸机上运行的，但该选项仍然是有必要的。如果不指明入口地址，则链接器会尝试查找一个名为\_start的函数（该函数定义在C语言标准运行时库中）作为入口。而我们已经在链接选项中设置了不与C语言标准库进行链接，因此这将会导致链接错误。
 *   \-N: 这个参数表示不对ELF文件中的各个section进行分段（segment），并且禁止链接器通过插入空字符的方式对不同的section进行对齐（具体请参考这篇[博客](https://juejin.cn/post/7355321162530652194#heading-4)）。就uCore项目而言，如果我们将该参数去掉，则会导致链接器在`.text section`后方插入大量空字符（如下图所示），使得该节的长度变为1024字节。而我们的bootloader大小是不能超过512字节的，因此必须开启`-N`选项。
-    ![无标题.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/931f2c111d494370b0878455d365dc11~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=t6JKmYYcYY5Mml5jdedwFfLxmqM%3D)
+    ![无标题.png](images/5a92a7c452228848ac66f35f4aab5bfd3c8e0ec98d6c71ba7e6013f58c79d31f.awebp)
 
 接下来我们重点看一下`-Ttext 0x7C00`这个链接参数。为了更好地理解这个参数，我们使用`readelf -S bootblock.o`来观察一下`bootblock.o`中各个section的内存布局。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/f4b58c1714384907ba9a4eb8a504850b~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=T4HPAr0MLRrsWZLCkhfRepxenaA%3D)
+![image.png](images/322ac22667a2e11bf651adfeb19a2bff0f15c58955336aae367c8e35f60156c8.awebp)
 
 我们注意到，对于`.text`节，链接器为其分配的首地址为`0x7c00`（见Addr字段，单位字节），与链接参数中的神秘数字保持一致。而其在ELF文件中的真实偏移量则为`0x0074`（见Off字段，单位字节）。这意味着什么呢？
 
 我们再执行`objdump -d -m i8086 bootblock.o`反汇编命令，来观察一下bootblock.o的机器代码。注意，由于bootloader执行初期CPU仍然处于16位实模式状态（即模拟Intel 8086芯片的状态），我们这里必须要加上参数`-m i8086`才能看到正确的16位汇编机器代码。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/df71caf2e52b43f4b04d149d99f1c599~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=Ae0RaUgk%2BKMR0zEaUC2Iu3Phfnc%3D)
+![image.png](images/0fc2c1a5f1a364ea944e5b7f4ad0026e69106bbc983878424b0c6e36c5707b72.awebp)
 
 请大家注意看我框起来的两处代码。第一处代码`lgdtw  0x7c6c`是加载临时的GDT表描述符，反汇编结果显示该描述符的首地址为`0x7c6c`。而实际bootblock.o文件中，该描述符相对于`.text`节首地址的偏移量是多少呢？通过简单的分析，不难确定偏移量为`0x006c`，即和机器代码中的地址差值恰好为神秘数字`0x7c00`。
 
@@ -155,7 +155,7 @@ Makefile源码中出现了两个比较关键的自定义函数`listf_cc`和`add_
 
 这行代码会将刚才链接得到的bootblock.o中的`.text`和`.eh_frame`（与调试有关）直接复制粘贴到一个新的文件bootblock.out中，抛弃了ELF文件中的其他信息，如下图所示。在拉起bootloader时，只需要保证BIOS能够跳转到bootblock.out中的头部执行即可——那里存放着我们bootloader的第一条代码！
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/df7e511a70f54b618092cc450ecfab4b~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=s2FBGoOVOIElEFW0CJPp3MUI0So%3D)
+![image.png](images/0a87c6f13478f9f9dfadb2394060981b0f6b1e8b8dabc38b8ed5f93d054f56b8.awebp)
 
 ### 3. 生成操作系统镜像
 
@@ -236,7 +236,7 @@ $(UCOREIMG): $(kernel) $(bootblock)
 2.  第二条指令表示用我们准备好的`bin/bootblock`（即MBR扇区）从`bin/ucore.img`头部开始覆盖。
 3.  第三条指令表示用我们准备好的`bin/kernel`从`bin/ucore.img`头部其跳过一个扇区的位置（即文件内部偏移0x200处）开始覆盖。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/3fc3ae275c0e48d1ad41a3adea90ac64~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=jYHKk%2Bxp6BN7GnCRutTN95CfqC0%3D)
+![image.png](images/f906c075ba555f68df71d4aa21a7237046f8a7b8e95710e3408e1185fd2f6dc6.awebp)
 
 至此，我们的操作系统镜像就制作完毕啦\~。可以使用qemu进行测试了：
 
@@ -266,23 +266,23 @@ qemu: $(UCOREIMG)
 
 我们先来看一下CPU上电后的第一条指令是什么。在gdb终端中输入`i r`并回车：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/fc62bb4eed2e4d2b985499205c90a683~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=HlkdmpFQzVggtnJfBzzcTlrY%2F4Y%3D)
+![image.png](images/890e152b05b9941c23cf94347cd899fe9815ec24814dbeb9b3e558e0332bba1c.awebp)
 
 按照16位CPU实模式寻址的规则，CPU上电后执行的第一条指令的地址即为`(cs << 4) + ip = 0xffff0`。我们来看看具体这条指令是什么，执行`x/i 0xffff0`：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/f7ea60f0381044f28e7c7400f7f5df68~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=ovhDKda91xpikg%2FZ%2FHOB%2B39rBZ0%3D)
+![image.png](images/ffbb6d9260258174e64fc50106dc8dff9b8469a8a56b4a2da61678e09ae106f6.awebp)
 
 这与文档中预期的`ljmp $0xf000,$0xe05b`不太一样。经查阅[资料](https://blog.csdn.net/m0_51139704/article/details/140809192)，我得知应该是我安装的gdb版本存在bug，导致其不能正确解析16位模式下的`ljmp`指令。
 
 虽然无法直接查看正确的`ljmp`指令反汇编内容，我们仍可以通过继续单步调试的方法来进一步确定程序接下来到底会跳转到哪里，执行`si`和`i r`：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/454f5e65a2da406da0127191ca830344~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=E0ndddhSq9WccAJajMwuNbQ5VRw%3D)
+![image.png](images/d66e3968db2b521189ec0a9797d20712b223c67fdcfbb159fae6141ec325b00f.awebp)
 
 可见CPU的确会跳转到`0xe05b`处开始执行BIOS程序，验证了理论知识。
 
 我们还可以看看BIOS程序的机器代码，执行`x/10i 0xfe05b`：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/551c0fa8c48c4ba6b33d46f9d53df454~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=Xl54GlOB0NnPgf2aAYwmB4LUJCo%3D)
+![image.png](images/a279fd2d9bdd45e67a3ffb35e4f2b26519c214eb25f44bdde73499e58b5aadbc.awebp)
 
 （虽然这里的反汇编结果应该也是有问题的）
 
@@ -298,7 +298,7 @@ qemu: $(UCOREIMG)
 
 执行`make debug`结果如图所示，可见bootloader的入口地址确实在`0x7c00`处:
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/80d1d142277b4ba9a935e357bda9cea7~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=5vQFjpTVCFmkBW9HBtFhltc%2FLP8%3D)
+![image.png](images/9baed573da5ead6606a4c08b333ec6804a89609b104d402d8e80695c8634af77.awebp)
 
 # 练习3：分析bootloader进入保护模式的过程。
 
@@ -526,7 +526,7 @@ readseg(uintptr_t va, uint32_t count, uint32_t offset) {
 
 这里我们来重点分析一下kernel的program header table结构。执行`readelf -l kernel`命令，结果如下：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/3f28154dac7b42c5b58bd44051f6d440~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=1JkOd87leZk1LZnjg%2F1VVOs%2FzcI%3D)
+![image.png](images/fde1d2712a2b8f126837e8b57ee8e1ceee59f0c8a777640729536ae99dd12bf5.awebp)
 
 简单来说，为了方便操作系统内核加载ELF文件，这种文件格式在设计的时候引入了*Program Header Table*的概念。即将ELF文件中的.data、.text、.bss等我们常说的sections，组织为若干个segments。其中每个segment都对应ELF文件当中一片连续的数据区域。进一步地，ELF文件格式将每个segment的相关信息储存在ELF文件中一个叫*Program Header Table*的数据结构当中，便于操作系统加载。
 
@@ -609,7 +609,7 @@ bad:
 
 到此为止，CPU就开始正式进入操作系统内核执行了。让我们来看看此时计算机物理内存中的内存布局全图：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/11c354702c394e4fa306e147a616da8b~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=q9oib%2FncB7TDR9ptdY37S6wZsAQ%3D)
+![image.png](images/8e0f3e35a04d31ee5dd8cf0a4acdeeb10c4afe4acf3726c3636065e43ca28476.awebp)
 
 # 练习5：实现函数调用堆栈跟踪函数
 
@@ -619,7 +619,7 @@ bad:
 
 CSAPP中给出了x86-64架构下的函数栈帧结构，32位的x86与之一致，只不过栈上每个元素的长度都仅为4字节罢了：
 
-![微信图片\_20240818235851.jpg](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/0b0a22cff9e242e58950a18807235062~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=VRRQs7EPGDG8vssZ5he80nkoEb0%3D)
+![微信图片\_20240818235851.jpg](images/0fdb1641a1481f56d05f35d6b7474f7c01de8f7f78de988501a9584ee3cbaede.awebp)
 
 结合源码中的提示，可轻松写出代码：
 
@@ -650,13 +650,13 @@ void print_stackframe(void) {
 
 演示效果如下：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/20c5ce724b0643c7b57458a926c8891c~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=2V%2F95iiflavgLr7OKNONVSVm890%3D)
+![image.png](images/bf0d65ced8cfc9dbac9f6c0405b26cebd5ed6dbb9aa292485a6a3d246f1e15a0.awebp)
 
 ## 解释最后一行各个数值的含义
 
 根据最后一行`eip: 0x00007d6e`的信息，我们可以推断最后一行的信息应该与bootloader中拉起`kern_init`的函数调用有关。具体见下图：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/c024a64395eb4d63846812d24fb7db3f~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=1q4iDOuIoX2bPfI3NJrKJhEpp8Y%3D)
+![image.png](images/228658f5e39c1e1b5ff2faa736b2697261cd2f62c5da9d4241413f336ef4fe27.awebp)
 
 通过在vscode中调试，可以清晰地看到：bootloader调用操作系统kernel的`call`指令位于物理地址`0x00007d62`处，紧随其后的一条指令（虽然事实上它永远不会被执行）的物理地址为`0x00007d6e`。也就是说当`call   *%eax`这条指令被执行时，CPU放置在堆栈上的返回地址也应当为`0x00007d6e`，这与我们在qemu模拟器中看到的输出结果是吻合的。
 
@@ -680,11 +680,11 @@ start:
 
 经过上述操作，我们有`%esp = 0x00007c00 -4 - 4 = 0x00007bf8`。紧接着，`bootmain`函数又会把`%esp`寄存器的值赋值给`%ebp`，因此`%ebp`寄存器的值就变成了`0x00007bf8`，意为`bootmain`函数栈帧的栈底位置。这与我们在qemu模拟器中观察到的结果相吻合。
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/f7257d9aa26c40bea67765b420e0321c~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=QnH9z%2F%2FrT%2Fvch0sA4ywlWksisyM%3D)
+![image.png](images/ed9dafd2ea7a2c690c91fc6de148a073f9fae28c780c24db8baeae972999ff74.awebp)
 
 最后回到我们的`print_stackframe`函数。当`kern/init/init.c:28 kern_init+79`这部分内容被输出后，该函数紧接着从栈上拿到bootloader调用`kern_init`的返回地址（在`bootmain`函数执行`call *%eax`时入栈），和对应`bootmain`函数栈帧底部的`%ebp`寄存器的值（在`bootmain`函数刚执行时入栈，见下图），我们就看到前述的输出结果啦\~
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/c7125b1d964e441aae128424289ef507~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=Mt6FXLvVO9z4t1qlx4mzSrGOuD4%3D)
+![image.png](images/7b96af7a452e6f03023dd9af7c3790a7d4918c89bd77d99f6bf483ecdb0551de.awebp)
 
 # 练习6：完善中断初始化和处理
 
@@ -844,7 +844,7 @@ static void trap_dispatch(struct trapframe *tf) {
 
 测试一下，ok代码能跑：
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/48e263665ae44ce9a5fe257a135a59d2~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=OdajhTskNLnBtakQvVdNHIne6i8%3D)
+![image.png](images/3bb58f0694c6ca721355e950c8d1ef0bdd02a890ff48ceeb08877fa840d0ff02.awebp)
 
 ## 观摩官方参考答案
 
@@ -1116,4 +1116,4 @@ static void trap_dispatch(struct trapframe *tf) {
 
 至此，uCore LggmPWTNgTPpY6evKrED2dy72wN9EDzgBQ
 
-![image.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/5cabac0f268242e3a6ccf81455a85b26~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510409&x-orig-sign=862NhJQWkROFEA2ciP6Qh80M2No%3D)
+![image.png](images/327762b47dee6c7f9a8fa41a29d1ee953b6123f7ea67a1d182a7d081d48d4333.awebp)

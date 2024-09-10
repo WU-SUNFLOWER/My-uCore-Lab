@@ -631,4 +631,4 @@ int do_fork(uint32_t clone_flags, uintptr_t stack, struct trapframe *tf) {
 
 原图出自[这里](https://blog.csdn.net/qq_39480177/article/details/130658752)，我感觉整理的非常好。
 
-![6002ad8a5fde228b2ab126eee68f562b.png](https://p0-xtjj-private.juejin.cn/tos-cn-i-73owjymdk6/7fb06bf0ab134315ae31befd7098c7f7~tplv-73owjymdk6-jj-mark-v1:0:0:0:0:5o6Y6YeR5oqA5pyv56S-5Yy6IEAgUEFL5ZCR5pel6JG1:q75.awebp?policy=eyJ2bSI6MywidWlkIjoiMzU0NDQ4MTIyMDAwODc0NCJ9&rk3s=f64ab15b&x-orig-authkey=f32326d3454f2ac7e96d3d06cdbb035152127018&x-orig-expires=1726510669&x-orig-sign=yiaQerZRGCIrL059zHJPGvKKygk%3D)
+![6002ad8a5fde228b2ab126eee68f562b.png](images/e881416ddddb42f0d5ad44051890a5eac3dfa704bcc4633ab04a499fcc3afc6c.awebp)
